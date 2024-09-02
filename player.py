@@ -14,19 +14,19 @@ class Player(pygame.sprite.Sprite):
         self.frame_index = 0
         temp_list = []
         for i in range(4):
-            img = pygame.image.load(f'public/assets/{self.char_type}/idle/idle_{i}.png')
+            img = pygame.image.load(f'public/assets/new_animations/{self.char_type}/idle/{i}_.png')
             img = pygame.transform.scale(img, (int(img.get_width() * scale), int(img.get_height() * scale)))
             temp_list.append(img)
         self.animation_list.append(temp_list)
         temp_list = []
         for i in range(8):
-            img = pygame.image.load(f'public/assets/{self.char_type}/walk/walk_{i}.png')
+            img = pygame.image.load(f'public/assets/new_animations/{self.char_type}/walk/{i}_.png')
             img = pygame.transform.scale(img, (int(img.get_width() * scale), int(img.get_height() * scale)))
             temp_list.append(img)
         self.animation_list.append(temp_list)
         temp_list = []
-        for i in range(7):
-            img = pygame.image.load(f'public/assets/{self.char_type}/run/run_{i}.png')
+        for i in range(4):
+            img = pygame.image.load(f'public/assets/new_animations/{self.char_type}/attack_2/{i}_.png')
             img = pygame.transform.scale(img, (int(img.get_width() * scale), int(img.get_height() * scale)))
             temp_list.append(img)
         self.animation_list.append(temp_list)
@@ -72,4 +72,10 @@ class Player(pygame.sprite.Sprite):
 
 
     def draw(self, screen):
-        screen.blit(pygame.transform.flip(self.image, self.flip, False), self.rect)
+        flipped_image = pygame.transform.flip(self.image, self.flip, False)
+        mask = pygame.mask.from_surface(flipped_image)
+        offset = mask.get_bounding_rects()[0].x  # Ottieni l'offset esatto della parte non vuota
+        if self.flip:
+            screen.blit(flipped_image, (self.rect.x - offset, self.rect.y))
+        else:
+            screen.blit(flipped_image, self.rect)
