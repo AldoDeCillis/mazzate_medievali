@@ -54,6 +54,20 @@ while True:
         if enemy.alive:
             enemy.enemy_ai(hero)  # AI del nemico che gestisce il movimento e l'attacco
             enemy.move(enemy.moving_left, enemy.moving_right, False, False)  # Il nemico si muove solo orizzontalmente
+            # Handle movement and action states
+            if enemy.attacking:
+                enemy.update_action(4 + enemy.combo_counter)  # Ensure the correct attack animation is active if attacking
+            elif enemy.in_air:
+                enemy.update_action(3)  # Jumping
+            elif enemy.moving_left or enemy.moving_right or enemy.moving_up or enemy.moving_down:
+                if enemy.speed > 4:
+                    enemy.update_action(2)  # Running
+                else:
+                    enemy.update_action(1)  # Walking
+            else:
+                enemy.update_action(0)  # Idle
+        else:
+            enemy.update_action(7)
         enemy.update_animation()
         enemy.draw(screen)
 
