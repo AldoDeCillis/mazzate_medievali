@@ -11,7 +11,12 @@ background = pygame.image.load(settings.BACKGROUND_PATH)
 
 # Create player instance
 hero = Player('hero', settings.SCREEN_WIDTH // 2, settings.SCREEN_HEIGHT // 2, 1, 4)
-enemy = Player('enemy', settings.SCREEN_WIDTH // 2, settings.SCREEN_HEIGHT // 2, 1, 4)
+
+enemies = pygame.sprite.Group()
+
+# Creazione di più nemici
+enemies.add(Player('enemy', 200, settings.SCREEN_HEIGHT // 2, 1, 4))
+# enemies.add(Player('enemy', 400, settings.SCREEN_HEIGHT // 2, 1, 4))
 
 def draw_bg():
     screen.blit(background, (0, 0))
@@ -43,8 +48,14 @@ while True:
     hero.move(hero.moving_left, hero.moving_right, hero.moving_up, hero.moving_down)
     hero.update_animation()
     hero.draw(screen)
-    enemy.move(enemy.moving_left, enemy.moving_right, enemy.moving_up, enemy.moving_down)
-    enemy.draw(screen)
+
+    # Enemy behavior
+    for enemy in enemies:
+        if enemy.alive:
+            enemy.enemy_ai(hero)  # AI del nemico che gestisce il movimento e l'attacco
+            enemy.move(enemy.moving_left, enemy.moving_right, False, False)  # Il nemico si muove solo orizzontalmente
+        enemy.update_animation()
+        enemy.draw(screen)
 
     for event in pygame.event.get():
         if event.type == pygame.KEYDOWN:
@@ -61,7 +72,7 @@ while True:
             if event.key == pygame.K_SPACE and hero.alive and not hero.is_jumping:
                 hero.is_jumping = True
             if event.key == pygame.K_a and hero.alive and not hero.attacking:
-                hero.attack()  # Trigger attack sequence
+                hero.attack(enemies)  # Passa il gruppo di nemici come bersagli
 
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_LEFT:
