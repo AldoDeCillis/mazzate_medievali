@@ -1,4 +1,3 @@
-# main.py
 import pygame
 from player import Player
 import settings
@@ -18,6 +17,7 @@ moving_down = False
 
 # Create player instance
 hero = Player('hero', settings.SCREEN_WIDTH // 2, settings.SCREEN_HEIGHT // 2, 1, 4)
+enemy = Player('enemy', settings.SCREEN_WIDTH // 2, settings.SCREEN_HEIGHT // 2, 1, 4)
 
 def draw_bg():
     screen.blit(background, (0, 0))
@@ -30,21 +30,27 @@ while True:
     draw_bg()
 
     if hero.alive:
-        # Se il giocatore è in salto
-        if hero.in_air:
-            hero.update_action(3)  # Cambia in "jump" se sta saltando
-        # Se il giocatore sta correndo (con LSHIFT premuto)
+        # Reset combo if too much time has passed since the last attack
+        hero.reset_combo()
+
+        # Handle movement and action states
+        if hero.attacking:
+            hero.update_action(4 + hero.combo_counter)  # Ensure the correct attack animation is active if attacking
+        elif hero.in_air:
+            hero.update_action(3)  # Jumping
         elif moving_left or moving_right or moving_up or moving_down:
-            if hero.speed > 4:  # Controlla se la velocità è maggiore di quella normale
-                hero.update_action(2)  # Cambia in "run" se c'è movimento rapido
+            if hero.speed > 4:
+                hero.update_action(2)  # Running
             else:
-                hero.update_action(1)  # Cambia in "walk" se c'è movimento normale
+                hero.update_action(1)  # Walking
         else:
-            hero.update_action(0)  # Cambia in "idle" se non c'è movimento
+            hero.update_action(0)  # Idle
 
     hero.move(moving_left, moving_right, moving_up, moving_down)
     hero.update_animation()
     hero.draw(screen)
+    # enemy.move(moving_left, moving_right, moving_up, moving_down)
+    # enemy.draw(screen)
 
     for event in pygame.event.get():
         if event.type == pygame.KEYDOWN:
@@ -57,9 +63,12 @@ while True:
             if event.key == pygame.K_DOWN:
                 moving_down = True
             if event.key == pygame.K_LSHIFT:
-                hero.speed = 6  # Aumenta la velocità per la corsa
+                hero.speed = 6  # Running
             if event.key == pygame.K_SPACE and hero.alive and not hero.is_jumping:
                 hero.is_jumping = True
+            if event.key == pygame.K_a and hero.alive and not hero.attacking:
+                hero.attack()  # Trigger attack sequence
+
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_LEFT:
                 moving_left = False
@@ -70,7 +79,8 @@ while True:
             if event.key == pygame.K_DOWN:
                 moving_down = False
             if event.key == pygame.K_LSHIFT:
-                hero.speed = 4  # Ripristina la velocità normale
+                hero.speed = 4  # Normal speed
+
         if event.type == pygame.QUIT:
             pygame.quit()
             exit()

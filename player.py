@@ -18,9 +18,13 @@ class Player(pygame.sprite.Sprite):
         self.is_jumping = False
         self.in_air = True
         self.jump_count = 0
-        
+        self.attacking = False
+        self.combo_counter = 0
+        self.combo_time = 0
+        self.combo_duration = 0
+
         # Load animations
-        for action in ['idle', 'walk', 'run', 'jump']:
+        for action in ['idle', 'walk', 'run', 'jump', 'attack_1', 'attack_2', 'attack_3']:
             temp_list = []
             frames_num = len(os.listdir(f'public/assets/new_animations/{self.char_type}/{action}'))
             for i in range(frames_num):
@@ -50,7 +54,7 @@ class Player(pygame.sprite.Sprite):
         if moving_down:
             dy = self.speed
 
-        if self.is_jumping and self.in_air == False:
+        if self.is_jumping and not self.in_air:
             self.vel_y = -20
             self.is_jumping = False
             self.in_air = True
@@ -69,12 +73,40 @@ class Player(pygame.sprite.Sprite):
         self.rect.x += dx
         self.rect.y += dy
 
+    def attack(self):
+        if not self.attacking:
+            self.attacking = True
+            # Define animation starting time
+            self.combo_time = pygame.time.get_ticks()
+            
+            # Determine which attack animation to use based on combo_counter
+            if self.combo_counter == 0:
+                self.update_action(4)  # attack_1
+            elif self.combo_counter == 1:
+                self.update_action(5)  # attack_2
+            elif self.combo_counter == 2:
+                self.update_action(6)  # attack_3
+            
+            self.frame_index = 0
+            
+            # Calculate the duration of the current attack animation
+            num_frames = len(self.animation_list[self.action])
+            attack_duration = settings.ANIMATION_COOLDOWN * num_frames  # Total time for the animation
+            
+            # Set combo_duration to animation duration + 500ms
+            self.combo_duration = attack_duration + 500
+
     def update_animation(self):
-        ANIMATION_COOLDOWN = 150  # Time in milliseconds between frames
-        if pygame.time.get_ticks() - self.update_time > ANIMATION_COOLDOWN:
+        if pygame.time.get_ticks() - self.update_time > settings.ANIMATION_COOLDOWN:
             self.update_time = pygame.time.get_ticks()
             self.frame_index += 1
             if self.frame_index >= len(self.animation_list[self.action]):
+                if self.attacking:
+                    self.attacking = False
+                    self.combo_counter += 1
+                    if self.combo_counter > 2:
+                        self.combo_counter = 0  # Reset combo after third attack
+                    self.update_action(0)  # Return to idle after attack
                 self.frame_index = 0
             self.image = self.animation_list[self.action][self.frame_index]
 
@@ -84,10 +116,15 @@ class Player(pygame.sprite.Sprite):
             self.frame_index = 0
             self.update_time = pygame.time.get_ticks()
 
+    def reset_combo(self):
+        # Reset combo if too much time has passed
+        if pygame.time.get_ticks() - self.combo_time > self.combo_duration:
+            self.combo_counter = 0
+
     def draw(self, screen):
         flipped_image = pygame.transform.flip(self.image, self.flip, False)
         mask = pygame.mask.from_surface(flipped_image)
-        offset = mask.get_bounding_rects()[0].x  # Ottieni l'offset esatto della parte non vuota
+        offset = mask.get_bounding_rects()[0].x  # Get the exact offset of the non-empty part
         if self.flip:
             screen.blit(flipped_image, (self.rect.x - offset, self.rect.y))
         else:

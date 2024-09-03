@@ -7,3 +7,4 @@ BACKGROUND_PATH = 'public/assets/background.jpg'
 
 #Game Settings
 GRAVITY = 0.75
+ANIMATION_COOLDOWN = 150
