@@ -5,6 +5,11 @@ import os
 class Player(pygame.sprite.Sprite):
     def __init__(self, char_type, x, y, scale, speed):
         super().__init__()
+        #moving variables
+        self.moving_left = False
+        self.moving_right = False
+        self.moving_up = False
+        self.moving_down = False
         self.alive = True
         self.update_time = pygame.time.get_ticks()
         self.speed = speed
