@@ -209,23 +209,34 @@ class Player(pygame.sprite.Sprite):
         pygame.draw.rect(screen, (0, 255, 0), (bar_x, bar_y, health_bar_width, bar_height))  # Current health
 
     def draw(self, screen):
-        # Disegna l'immagine del personaggio
+        # Capovolgi l'immagine se il personaggio si sta muovendo a sinistra
         flipped_image = pygame.transform.flip(self.image, self.flip, False)
-        mask = pygame.mask.from_surface(flipped_image)
-        offset = mask.get_bounding_rects()[0].x  # Ottieni l'offset esatto della parte non vuota
-        if self.flip:
-            screen.blit(flipped_image, (self.rect.x - offset, self.rect.y))
-        else:
-            screen.blit(flipped_image, self.rect)
 
-        # Disegna la maschera di collisione per il debug
-        mask_outline = self.mask.outline()  # Ottieni i punti del contorno della maschera
-        mask_outline = [(self.rect.x + p[0], self.rect.y + p[1]) for p in mask_outline]  # Adatta i punti alle coordinate globali
+        # Ottieni la larghezza dell'immagine e del rect
+        img_width = flipped_image.get_width()
+        img_height = flipped_image.get_height()
+
+        # Calcoliamo la posizione orizzontale dell'immagine rispetto al rect
         if self.flip:
-            mask_outline = [(self.rect.x + self.image.get_width() - p[0], p[1]) for p in mask_outline]  # Adatta i punti per l'immagine capovolta
-        
-        if mask_outline:
-            pygame.draw.lines(screen, (0, 255, 0), True, mask_outline, 2)  # Disegna il contorno in verde
+            # Se il personaggio è flippato, allinea l'immagine dal lato destro del rect
+            draw_x = self.rect.right - img_width
+        else:
+            # Se il personaggio non è flippato, usa il lato sinistro del rect
+            draw_x = self.rect.x + self.rect.width / 2
+
+        # Blitta l'immagine flippata o normale nella posizione corretta
+        screen.blit(flipped_image, (draw_x, self.rect.y))
+
+        # Disegna il rect del personaggio in rosso per debug
+        pygame.draw.rect(screen, (255, 0, 0), self.rect, 2)
+
+        # Aggiorna la maschera basandosi sull'immagine flippata o normale
+        self.mask = pygame.mask.from_surface(flipped_image)
+
+        # Disegna la maschera di collisione per il debug (opzionale)
+        mask_outline = self.mask.outline()
+        mask_outline = [(self.rect.x + p[0], self.rect.y + p[1]) for p in mask_outline]
+        pygame.draw.lines(screen, (0, 255, 0), True, mask_outline, 2)
 
         # Disegna la barra della salute sopra la testa del personaggio
         self.draw_health_bar(screen)

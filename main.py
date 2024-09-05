@@ -15,7 +15,7 @@ hero = Player('hero', settings.SCREEN_WIDTH // 2, settings.SCREEN_HEIGHT // 2, 1
 enemies = pygame.sprite.Group()
 
 # Creazione di più nemici
-enemies.add(Player('enemy', 200, settings.SCREEN_HEIGHT // 2, 1, 4))
+# enemies.add(Player('enemy', 200, settings.SCREEN_HEIGHT // 2, 1, 4))
 # enemies.add(Player('enemy', 400, settings.SCREEN_HEIGHT // 2, 1, 4))
 
 def draw_bg():
