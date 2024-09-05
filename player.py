@@ -48,6 +48,35 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
         self.mask = self.mask_list[self.action][self.frame_index]
+        
+
+    def update(self):
+        if self.alive:
+            self.update_animation()
+            #Check collision with player
+            
+            
+            # Create an attack hitbox using mask collision
+            if isinstance(settings.player_group, pygame.sprite.Group):
+                for target in settings.player_group:
+                    offset = (target.rect.x - self.rect.x, target.rect.y - self.rect.y)
+                    if pygame.sprite.spritecollide(self, settings.player_group, False):
+                        target.health -= 10  # Deal damage
+                        if target.health <= 0:
+                            target.alive = False
+                            target.update_action(7)  # Switch to "dead" animation
+            else:  # Otherwise, it's a single target (like the hero)
+                offset = (settings.player_group.rect.x - self.rect.x, settings.player_group.rect.y - self.rect.y)
+                if pygame.sprite.spritecollide(self, settings.player_group, False) and settings.player_group.alive:
+                    settings.player_group.health -= 10
+                    
+                    if settings.player_group.health <= 0:
+                        settings.player_group.alive = False
+                        settings.player_group.update_action(7)
+                        
+            
+                self.alive = False
+            self.draw()
 
     def move(self, moving_left, moving_right, moving_up, moving_down):
         dx = 0
@@ -124,9 +153,11 @@ class Player(pygame.sprite.Sprite):
                 offset = (targets.rect.x - self.rect.x, targets.rect.y - self.rect.y)
                 if self.mask.overlap(targets.mask, offset) and targets.alive:
                     targets.health -= 10
+                    
                     if targets.health <= 0:
                         targets.alive = False
                         targets.update_action(7)
+                        
 
     def update_animation(self):
         if pygame.time.get_ticks() - self.update_time > settings.ANIMATION_COOLDOWN:
