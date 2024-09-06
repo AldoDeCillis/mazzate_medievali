@@ -14,7 +14,7 @@ hero = Player('hero', settings.SCREEN_WIDTH // 2, settings.SCREEN_HEIGHT // 2, 1
 
 # Creazione di più nemici
 # settings.player_group.add(Player('enemy', 200, settings.SCREEN_HEIGHT // 2, 1, 4))
-# settings.player_group.add(Player('enemy', 400, settings.SCREEN_HEIGHT // 2, 1, 4))
+settings.player_group.add(Player('enemy', 400, settings.SCREEN_HEIGHT // 2, 1, 4))
 
 def draw_bg():
     screen.blit(background, (0, 0))
