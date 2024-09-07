@@ -32,17 +32,24 @@ class Player(pygame.sprite.Sprite):
 
         # Load animations and create masks
         for action in ['idle', 'walk', 'run', 'jump', 'attack_1', 'attack_2', 'attack_3', 'dead']:
-            temp_list = []
-            mask_list_temp = []
-            frames_num = len(os.listdir(f'public/assets/new_animations/{self.char_type}/{action}'))
-            for i in range(frames_num):
-                img = pygame.image.load(f'public/assets/new_animations/{self.char_type}/{action}/{i}_.png')
-                img = pygame.transform.scale(img, (int(img.get_width() * scale), int(img.get_height() * scale)))
-                temp_list.append(img)
-                # Create a mask for the current image
-                mask_list_temp.append(pygame.mask.from_surface(img))
-            self.animation_list.append(temp_list)
-            self.mask_list.append(mask_list_temp)
+            try:
+                temp_list = []
+                mask_list_temp = []
+                frames_num = len(os.listdir(f'public/assets/new_animations/{self.char_type}/{action}'))
+                for i in range(frames_num):
+                    img = pygame.image.load(f'public/assets/new_animations/{self.char_type}/{action}/{i}_.png')
+                    img = pygame.transform.scale(img, (int(img.get_width() * scale), int(img.get_height() * scale)))
+                    temp_list.append(img)
+                    # Crea una maschera per l'immagine corrente
+                    mask_list_temp.append(pygame.mask.from_surface(img))
+                self.animation_list.append(temp_list)
+                self.mask_list.append(mask_list_temp)
+            except FileNotFoundError:
+                # Se l'animazione non esiste, carica quella di default (ad esempio idle)
+                if action != 'idle':
+                    self.animation_list.append(self.animation_list[0])  # Usa l'animazione idle come fallback
+                    self.mask_list.append(self.mask_list[0])  # Usa la maschera di idle
+
 
         self.image = self.animation_list[self.action][self.frame_index]
         self.rect = self.image.get_rect()

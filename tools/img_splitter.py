@@ -3,7 +3,7 @@ from PIL import Image
 import glob
 
 # Percorso della cartella contenente i file di input
-input_folder = './public/assets/new_animations/enemy/'
+input_folder = './public/assets/new_animations/skeleton/'
 
 # Dimensioni del frame
 frame_width = 128
