@@ -44,13 +44,12 @@ while True:
             hero.update_action(0)  # Idle
 
     hero.move(hero.moving_left, hero.moving_right, hero.moving_up, hero.moving_down)
-    hero.update_animation()
-    hero.draw(screen)
+    hero.update(screen)
 
     # Enemy behavior
     for enemy in settings.player_group:
         if enemy.alive:
-            enemy.enemy_ai(hero)  # AI del nemico che gestisce il movimento e l'attacco
+            # enemy.enemy_ai(hero)  # AI del nemico che gestisce il movimento e l'attacco
             enemy.move(enemy.moving_left, enemy.moving_right, False, False)  # Il nemico si muove solo orizzontalmente
             # Handle movement and action states
             if enemy.attacking:

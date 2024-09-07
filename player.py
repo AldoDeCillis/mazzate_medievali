@@ -50,33 +50,11 @@ class Player(pygame.sprite.Sprite):
         self.mask = self.mask_list[self.action][self.frame_index]
         
 
-    def update(self):
+    def update(self, screen):
         if self.alive:
             self.update_animation()
-            #Check collision with player
-            
-            
-            # Create an attack hitbox using mask collision
-            if isinstance(settings.player_group, pygame.sprite.Group):
-                for target in settings.player_group:
-                    offset = (target.rect.x - self.rect.x, target.rect.y - self.rect.y)
-                    if pygame.sprite.spritecollide(self, settings.player_group, False):
-                        target.health -= 10  # Deal damage
-                        if target.health <= 0:
-                            target.alive = False
-                            target.update_action(7)  # Switch to "dead" animation
-            else:  # Otherwise, it's a single target (like the hero)
-                offset = (settings.player_group.rect.x - self.rect.x, settings.player_group.rect.y - self.rect.y)
-                if pygame.sprite.spritecollide(self, settings.player_group, False) and settings.player_group.alive:
-                    settings.player_group.health -= 10
-                    
-                    if settings.player_group.health <= 0:
-                        settings.player_group.alive = False
-                        settings.player_group.update_action(7)
-                        
-            
-                self.alive = False
-            self.draw()
+
+            self.draw(screen)
 
     def move(self, moving_left, moving_right, moving_up, moving_down):
         dx = 0
@@ -140,23 +118,26 @@ class Player(pygame.sprite.Sprite):
             attack_duration = settings.ANIMATION_COOLDOWN * num_frames
             self.combo_duration = attack_duration + 500
 
-            # Create an attack hitbox using mask collision
+            # Create an attack hitbox using sprite collision
             if isinstance(targets, pygame.sprite.Group):
-                for target in targets:
+                for target in settings.player_group:
                     offset = (target.rect.x - self.rect.x, target.rect.y - self.rect.y)
-                    if self.mask.overlap(target.mask, offset) and target.alive:
+                    if pygame.sprite.spritecollide(self, settings.player_group, False):
                         target.health -= 10  # Deal damage
                         if target.health <= 0:
                             target.alive = False
                             target.update_action(7)  # Switch to "dead" animation
             else:  # Otherwise, it's a single target (like the hero)
                 offset = (targets.rect.x - self.rect.x, targets.rect.y - self.rect.y)
-                if self.mask.overlap(targets.mask, offset) and targets.alive:
+                if pygame.sprite.spritecollide(self, targets, False) and targets.alive:
                     targets.health -= 10
                     
                     if targets.health <= 0:
                         targets.alive = False
                         targets.update_action(7)
+                self.alive = False
+                
+                
                         
 
     def update_animation(self):
@@ -256,7 +237,7 @@ class Player(pygame.sprite.Sprite):
             # Draw the outline of the mask for debug
             mask_outline = [(self.rect.left - img_width / 2 + p[0], self.rect.y + p[1]) for p in mask_outline]
             # Draw the rect for debug
-            # pygame.draw.rect(screen, (255, 0, 0), corrected_rect, 2)
+            pygame.draw.rect(screen, (255, 0, 0), corrected_rect, 2)
 
         else:
             # If the character is not flipped, use the left side of the rect
@@ -264,7 +245,7 @@ class Player(pygame.sprite.Sprite):
             # Draw the outline of the mask for debug
             mask_outline = [(self.rect.x + p[0], self.rect.y + p[1]) for p in mask_outline]
             # Draw the rect for debug
-            # pygame.draw.rect(screen, (255, 0, 0), self.rect, 2)
+            pygame.draw.rect(screen, (255, 0, 0), self.rect, 2)
         
         pygame.draw.lines(screen, (0, 255, 0), True, mask_outline, 2)
 
