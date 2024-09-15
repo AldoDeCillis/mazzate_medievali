@@ -30,7 +30,6 @@ class Player(pygame.sprite.Sprite):
         self.combo_time = 0
         self.combo_duration = 0
 
-        # Load animations and create masks
         for action in ['idle', 'walk', 'run', 'jump', 'attack_1', 'attack_2', 'attack_3', 'dead']:
             try:
                 temp_list = []
@@ -44,24 +43,22 @@ class Player(pygame.sprite.Sprite):
                     mask_list_temp.append(pygame.mask.from_surface(img))
                 self.animation_list.append(temp_list)
                 self.mask_list.append(mask_list_temp)
+                print(f'Loaded {action} animation with {frames_num} frames for {self.char_type}')  # Linea di debug
             except FileNotFoundError:
                 # Se l'animazione non esiste, carica quella di default (ad esempio idle)
+                print(f'Animation {action} not found for {self.char_type}')  # Linea di debug
                 if action != 'idle':
                     self.animation_list.append(self.animation_list[0])  # Usa l'animazione idle come fallback
                     self.mask_list.append(self.mask_list[0])  # Usa la maschera di idle
-
 
         self.image = self.animation_list[self.action][self.frame_index]
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
         self.mask = self.mask_list[self.action][self.frame_index]
-        
 
-    def update(self, screen):
-        if self.alive:
-            self.update_animation()
-
-            self.draw(screen)
+    def update(self):
+        self.update_animation()
+        self.check_alive()
 
     def move(self, moving_left, moving_right, moving_up, moving_down):
         dx = 0
@@ -100,11 +97,6 @@ class Player(pygame.sprite.Sprite):
             self.rect.x += dx
             self.rect.y += dy
 
-            # Update hitbox position to follow the player
-            self.mask = self.mask_list[self.action][self.frame_index]
-        else:
-            return
-
     def attack(self, targets):
         if not self.attacking:
             self.attacking = True
@@ -128,34 +120,25 @@ class Player(pygame.sprite.Sprite):
             # Create an attack hitbox using sprite collision
             if isinstance(targets, pygame.sprite.Group):
                 for target in settings.player_group:
-                    offset = (target.rect.x - self.rect.x, target.rect.y - self.rect.y)
                     if pygame.sprite.spritecollide(self, settings.player_group, False):
                         target.health -= 10  # Deal damage
+                        
                         if target.health <= 0:
                             target.alive = False
-                            target.update_action(7)  # Switch to "dead" animation
             else:  # Otherwise, it's a single target (like the hero)
-                offset = (targets.rect.x - self.rect.x, targets.rect.y - self.rect.y)
-                if pygame.sprite.spritecollide(self, targets, False) and targets.alive:
+                if pygame.sprite.spritecollide(self, settings.player_group, False) and targets.alive:
                     targets.health -= 10
-                    
                     if targets.health <= 0:
                         targets.alive = False
-                        targets.update_action(7)
-                self.alive = False
-                
-                
-                        
 
     def update_animation(self):
         if pygame.time.get_ticks() - self.update_time > settings.ANIMATION_COOLDOWN:
             self.update_time = pygame.time.get_ticks()
             self.frame_index += 1
 
-            # If the enemy is dead and the action isn't already set to "dead", update the action
-            if not self.alive and self.action != 7:
+            if not self.alive and self.action != 7:  # 7 è l'azione 'dead'
                 self.update_action(7)
-            
+
             if self.frame_index >= len(self.animation_list[self.action]):
                 if self.attacking:
                     self.attacking = False
@@ -164,9 +147,9 @@ class Player(pygame.sprite.Sprite):
                         self.combo_counter = 0  # Reset combo after the third attack
                     self.update_action(0)  # Return to "idle" action after attack
 
-                # If the "dead" animation is finished, don't repeat it
-                if self.action == 7:
-                    self.frame_index = len(self.animation_list[self.action]) - 1
+                if self.action == 7:  # Se l'azione è 'dead'
+                    if self.frame_index >= len(self.animation_list[self.action]):
+                        self.frame_index = len(self.animation_list[self.action]) - 1  # Blocca l'animazione sull'ultimo frame
                 else:
                     self.frame_index = 0
 
@@ -176,7 +159,7 @@ class Player(pygame.sprite.Sprite):
     def update_action(self, new_action):
         if new_action != self.action:
             self.action = new_action
-            self.frame_index = 0
+            self.frame_index = 0  # Azzerare il frame_index
             self.update_time = pygame.time.get_ticks()
             self.mask = self.mask_list[self.action][self.frame_index]  # Update the mask for the new action
 
@@ -184,33 +167,13 @@ class Player(pygame.sprite.Sprite):
         # Reset combo if too much time has passed
         if pygame.time.get_ticks() - self.combo_time > self.combo_duration:
             self.combo_counter = 0
-
-    def enemy_ai(self, player):
-        if self.alive and player.alive:
-            # Determine direction towards the player
-            if self.rect.x < player.rect.x:
-                self.moving_right = True
-                self.moving_left = False
-                self.flip = False
-            elif self.rect.x > player.rect.x:
-                self.moving_right = False
-                self.moving_left = True
-                self.flip = True
-
-            # Determine distance from the player
-            distance = abs(self.rect.x - player.rect.x)
-
-            # If the enemy is close enough, attack
-            if distance < 50:
-                self.moving_left = False
-                self.moving_right = False
-                self.attack(player)
-            else:
-                self.moving_left = self.rect.x > player.rect.x
-                self.moving_right = self.rect.x < player.rect.x
-        else:
-            self.moving_left = False
-            self.moving_right = False
+            
+    def check_alive(self):
+        if self.health <= 0:
+            self.alive = False
+            self.speed = 0
+            self.update_action(7)
+            
 
     def draw_health_bar(self, screen):
         # Determine the width of the health bar based on current health
@@ -232,29 +195,12 @@ class Player(pygame.sprite.Sprite):
         flipped_image = pygame.transform.flip(self.image, self.flip, False)
         # Create mask
         self.mask = pygame.mask.from_surface(flipped_image)
-        mask_outline = self.mask.outline()
         # Width of the image
         img_width = flipped_image.get_width()
         # If the character is flipped, align the image from the right side of the rect
         if self.flip:
-            # Corrected rect drawing
-            corrected_rect = pygame.Rect(self.rect.left - img_width / 2, self.rect.top, self.rect.width, self.rect.height)
-            # Draw the sprite
             screen.blit(flipped_image, (self.rect.left - img_width / 2, self.rect.y))
-            # Draw the outline of the mask for debug
-            mask_outline = [(self.rect.left - img_width / 2 + p[0], self.rect.y + p[1]) for p in mask_outline]
-            # Draw the rect for debug
-            pygame.draw.rect(screen, (255, 0, 0), corrected_rect, 2)
-
         else:
-            # If the character is not flipped, use the left side of the rect
             screen.blit(flipped_image, (self.rect.x, self.rect.y))
-            # Draw the outline of the mask for debug
-            mask_outline = [(self.rect.x + p[0], self.rect.y + p[1]) for p in mask_outline]
-            # Draw the rect for debug
-            pygame.draw.rect(screen, (255, 0, 0), self.rect, 2)
-        
-        pygame.draw.lines(screen, (0, 255, 0), True, mask_outline, 2)
 
-        # Disegna la barra della salute sopra la testa del personaggio
         self.draw_health_bar(screen)
